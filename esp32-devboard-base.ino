@@ -65,14 +65,16 @@ CRGB leds[NUM_LEDS];
 
 // Safe output-capable pins exposed on headers
 // Excludes: UART(1,3), I2C(21,22), WS2812(27), flash(6-11), input-only(34,35,36,39)
-// Excludes: UART(1,3), I2C/SDA(5), I2C/SCL(4), WS2812(27), flash(6-11), input-only(34,35,36,39)
+// H1: IO23, IO19, IO18, IO25, IO26  (skip IO5=SDA, IO1/IO3=UART)
+// H2: IO13, IO12, IO14, IO15, IO21, IO22, IO17, IO16  (IO21/22 free — PCB I2C is on IO4/5)
+// H3: IO33, IO32, IO2, IO0  (skip IO4=SCL, IO35=input-only)
+// Excludes: UART(1,3), I2C(4,5), WS2812(27), flash(6-11), input-only(34,35,36,39)
 const uint8_t TEST_PINS[] = {
-  0, 2, 12, 13, 14, 15,
-  16, 17, 18, 19, 23, 25, 26, 32, 33
+  0, 2, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 32, 33
 };
 const uint8_t NUM_TEST_PINS = sizeof(TEST_PINS) / sizeof(TEST_PINS[0]);
 
-bool pinStates[15] = {false};
+bool pinStates[17] = {false};
 
 // ============================================================================
 // MENU STATE
@@ -251,7 +253,8 @@ void handleButtonPresses() {
   bool center = wasPressed(1);
   bool right  = wasPressed(2);
 
-  if (!left && !center && !right) return;
+  bool anyHold = wasHeld(0) || wasHeld(1) || wasHeld(2);
+  if (!left && !center && !right && !anyHold) return;
 
   if (currentScreen == SCREEN_MAIN_MENU) {
     if (left) {
@@ -463,12 +466,14 @@ void renderBoardInfo() {
 // ============================================================================
 
 const char* getHeaderName(uint8_t pin) {
-  if (pin == 23 || pin == 19 || pin == 18 || pin == 5 ||
-      pin == 25 || pin == 26 || pin == 1  || pin == 3)  return "H1";
+  // H1: IO23, IO19, IO18, IO5(I2C), IO25, IO26, IO1(UART), IO3(UART)
+  if (pin == 23 || pin == 19 || pin == 18 ||
+      pin == 25 || pin == 26)                            return "H1";
+  // H2: IO13, IO12, IO14, IO15, IO21, IO22, IO17, IO16
   if (pin == 13 || pin == 12 || pin == 14 || pin == 15 ||
       pin == 21 || pin == 22 || pin == 17 || pin == 16)  return "H2";
-  if (pin == 4  || pin == 33 || pin == 32 || pin == 35 ||
-      pin == 2  || pin == 0)                              return "H3";
+  // H3: IO4(I2C), IO33, IO32, IO35(in-only), IO2, IO0
+  if (pin == 33 || pin == 32 || pin == 2  || pin == 0)  return "H3";
   return "??";
 }
 
