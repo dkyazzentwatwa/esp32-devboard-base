@@ -8,7 +8,6 @@ A modular ESP32 development board firmware suite with OLED display, button navig
 - **SSD1306** 0.96" OLED display (I2C: SDA=5, SCL=4)
 - **3 tactile buttons** (GPIO 34, 36, 39 — input-only pins)
 - **WS2812 RGB LED** (GPIO 27)
-- **Buzzer** (optional, GPIO 27)
 
 ## Firmware Sketches
 
@@ -26,6 +25,29 @@ Base firmware for general ESP32 dev board testing.
 **Test Pins (H1):** IO23, IO19, IO18, IO25, IO26  
 **Test Pins (H2):** IO13, IO12, IO14, IO15, IO21, IO22, IO17, IO16  
 **Test Pins (H3):** IO33, IO32, IO2, IO0
+
+### `esp32_pico_gamer/`
+Arduino/C++ port of the Pico Gamer project for this ESP32 devboard.
+
+**Features:**
+- Launcher for 52 128x64 OLED games, from Pico ports to new micro arcade, puzzle, shooter, board, racing, and reflex games
+- Modular game engine with display helpers, debounced button input, and game lifecycle helpers
+- Three-button smart controls: Left/Right move or navigate, Select starts/actions, Select long press exits to launcher
+- Silent gameplay: no PWM audio, no buzzer pin, no tone output
+- RGB LED feedback for menu movement, collisions, scores, crashes, and landings
+
+**Controls:**
+- GPIO 34 — Left
+- GPIO 36 — Right
+- GPIO 39 — Select
+
+**Game Catalog:**
+- Pico ports: Pong, Snake, Full Speed, Lunar Module
+- Arcade/action: Breakout, Flappy Pico, Dino Runner, Jetpack, Dodge Rain, Catch Star, Basket Catch, Balloon Pop, Cave Flyer, Tunnel Run, Wall Bounce, Gravity Flip, Platform Hop, Brick Drop
+- Motion/racing: Lane Racer, Traffic Dodge, Ski Slalom, Boat Slalom, Rail Runner, Road Drift
+- Shooters: Asteroids, Invaders, Missile Cmd, Turret Def, UFO Defender, Meteor Blast
+- Puzzles: Lights Out, Minefield, Sokoban, Sliding, Memory, Simon, Mastermind, Number Guess, Flood Fill, Box Push, Laser Mirror
+- Board/reflex: Tic Tac Toe, Connect Four, Nim, Dots Boxes, Reaction, Quick Draw, Stop Bar, Stack Tower, Lock Pick, Pixel Whack, Pulse Match
 
 ### `cypher_flock_esp32_devkit/`
 WiFi device detector firmware for the custom devkit board.
@@ -72,12 +94,12 @@ arduino-cli board list
 
 # Compile (devkit profile)
 arduino-cli compile \
-  --fqbn esp32:esp32:esp32dev \
+  --fqbn esp32:esp32:esp32 \
   --build-property build.extra_flags='-DESP32 -DBOARD_PROFILE=CYPHER_FLOCK_DEVKIT'
 
 # Flash
 arduino-cli upload -p /dev/ttyUSB0 \
-  --fqbn esp32:esp32:esp32dev \
+  --fqbn esp32:esp32:esp32 \
   --build-property build.extra_flags='-DESP32 -DBOARD_PROFILE=CYPHER_FLOCK_DEVKIT'
 
 # Monitor
@@ -87,8 +109,15 @@ arduino-cli monitor -p /dev/ttyUSB0 -b 115200
 For `esp32-devboard-base.ino`, omit `--build-property` and flash directly:
 
 ```bash
-arduino-cli compile -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32dev
-arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32dev
+arduino-cli compile -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32
+arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32
+```
+
+For the Pico Gamer port:
+
+```bash
+arduino-cli compile --fqbn esp32:esp32:esp32 esp32_pico_gamer
+arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 esp32_pico_gamer
 ```
 
 ## Pin Reference
@@ -97,7 +126,7 @@ arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32dev
 |-----|----------|
 | 4 | OLED SCL |
 | 5 | OLED SDA |
-| 27 | WS2812 LED / Buzzer |
+| 27 | WS2812 RGB LED |
 | 34 | Button Left / Up |
 | 36 | Button Center / Down |
 | 39 | Button Right / Select |
