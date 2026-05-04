@@ -10,11 +10,11 @@ bool nextTick(uint32_t& nextFrame, uint16_t frameMs) {
 }
 
 void drawCellValue(GamerEngine& engine, int16_t x, int16_t y, uint8_t value, uint8_t size) {
-  if (value == 0) engine.screen().drawRect(x, y, size - 1, size - 1, SSD1306_WHITE);
-  else if (value == 1) engine.screen().fillRect(x + 2, y + 2, size - 4, size - 4, SSD1306_WHITE);
+  if (value == 0) engine.screen().drawRect(x, y, size - 1, size - 1, GAMER_WHITE);
+  else if (value == 1) engine.screen().fillRect(x + 2, y + 2, size - 4, size - 4, GAMER_WHITE);
   else {
-    engine.screen().drawLine(x + 2, y + 2, x + size - 4, y + size - 4, SSD1306_WHITE);
-    engine.screen().drawLine(x + size - 4, y + 2, x + 2, y + size - 4, SSD1306_WHITE);
+    engine.screen().drawLine(x + 2, y + 2, x + size - 4, y + size - 4, GAMER_WHITE);
+    engine.screen().drawLine(x + size - 4, y + 2, x + 2, y + size - 4, GAMER_WHITE);
   }
 }
 
@@ -41,12 +41,20 @@ bool allSame(uint8_t board[5][5]) {
 
 void drawTinyBoard(GamerEngine& engine, const uint8_t* board, uint8_t cols, uint8_t rows,
                    uint8_t cursor, uint8_t cell, int16_t ox, int16_t oy) {
+  const int16_t scaledCell = gameSize(engine, cell);
+  const int16_t scaledOx = gameX(engine, ox);
+  const int16_t scaledOy = gameY(engine, oy);
   for (uint8_t i = 0; i < cols * rows; i++) {
     uint8_t x = i % cols;
     uint8_t y = i / cols;
-    if (board[i] != 0) engine.screen().fillRect(ox + x * cell + 2, oy + y * cell + 2, cell - 4, cell - 4, SSD1306_WHITE);
-    else engine.screen().drawRect(ox + x * cell + 2, oy + y * cell + 2, cell - 4, cell - 4, SSD1306_WHITE);
-    if (i == cursor) drawCursorBox(engine, ox + x * cell + 1, oy + y * cell + 1, cell - 2, cell - 2);
+    const int16_t px = scaledOx + x * scaledCell;
+    const int16_t py = scaledOy + y * scaledCell;
+    if (board[i] != 0) engine.screen().fillRect(px + scaledCell / 6, py + scaledCell / 6,
+                                                scaledCell * 2 / 3, scaledCell * 2 / 3,
+                                                GAMER_ACCENT);
+    else engine.screen().drawRect(px + scaledCell / 6, py + scaledCell / 6,
+                                  scaledCell * 2 / 3, scaledCell * 2 / 3, GAMER_WHITE);
+    if (i == cursor) drawCursorBox(engine, px + 1, py + 1, scaledCell - 2, scaledCell - 2);
   }
 }
 
@@ -127,8 +135,8 @@ void runMinefield(GamerEngine& engine) {
         uint8_t y = i / 4;
         int16_t px = 36 + x * 14;
         int16_t py = 8 + y * 14;
-        engine.screen().drawRect(px, py, 12, 12, SSD1306_WHITE);
-        if (open[i]) engine.screen().fillCircle(px + 6, py + 6, 2, SSD1306_WHITE);
+        engine.screen().drawRect(px, py, 12, 12, GAMER_WHITE);
+        if (open[i]) engine.screen().fillCircle(px + 6, py + 6, 2, GAMER_WHITE);
         if (i == cursor) drawCursorBox(engine, px, py, 12, 12);
       }
       drawScore(engine, safe);
@@ -167,10 +175,10 @@ void runSokobanMicro(GamerEngine& engine) {
         }
       }
       engine.clear();
-      engine.screen().drawRect(10, 8, 9 * 12, 7 * 8, SSD1306_WHITE);
-      engine.screen().drawCircle(10 + tx * 12 + 6, 8 + ty * 8 + 4, 4, SSD1306_WHITE);
-      engine.screen().fillRect(10 + bx * 12 + 2, 8 + by * 8 + 1, 8, 6, SSD1306_WHITE);
-      engine.screen().drawRect(10 + px * 12 + 3, 8 + py * 8 + 1, 6, 6, SSD1306_WHITE);
+      engine.screen().drawRect(10, 8, 9 * 12, 7 * 8, GAMER_WHITE);
+      engine.screen().drawCircle(10 + tx * 12 + 6, 8 + ty * 8 + 4, 4, GAMER_WHITE);
+      engine.screen().fillRect(10 + bx * 12 + 2, 8 + by * 8 + 1, 8, 6, GAMER_WHITE);
+      engine.screen().drawRect(10 + px * 12 + 3, 8 + py * 8 + 1, 6, 6, GAMER_WHITE);
       drawScore(engine, moves);
       engine.show();
       if (bx == tx && by == ty) {
@@ -266,7 +274,7 @@ void runMemoryMatch(GamerEngine& engine) {
       for (uint8_t i = 0; i < 8; i++) {
         int16_t x = 24 + (i % 4) * 20;
         int16_t y = 14 + (i / 4) * 20;
-        engine.screen().drawRect(x, y, 16, 16, SSD1306_WHITE);
+        engine.screen().drawRect(x, y, 16, 16, GAMER_WHITE);
         if (shown[i] || matched[i]) {
           engine.screen().setCursor(x + 5, y + 4);
           engine.screen().print(cards[i]);
@@ -477,7 +485,7 @@ void runLaserMirror(GamerEngine& engine) {
       for (uint8_t i = 0; i < 9; i++) {
         int16_t px = 40 + (i % 3) * 16;
         int16_t py = 14 + (i / 3) * 14;
-        engine.screen().drawLine(px + 3, mirror[i] ? py + 3 : py + 10, px + 12, mirror[i] ? py + 10 : py + 3, SSD1306_WHITE);
+        engine.screen().drawLine(px + 3, mirror[i] ? py + 3 : py + 10, px + 12, mirror[i] ? py + 10 : py + 3, GAMER_WHITE);
         if (i == cursor) drawCursorBox(engine, px, py, 14, 12);
       }
       drawScore(engine, moves);
@@ -490,4 +498,3 @@ void runLaserMirror(GamerEngine& engine) {
     }
   }
 }
-

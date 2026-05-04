@@ -17,14 +17,20 @@ bool frameReady(uint32_t& nextFrame, uint16_t frameMs) {
 
 void drawTarget(GamerEngine& engine, int16_t x, int16_t y, uint8_t style) {
   if (style == 0) {
-    engine.screen().drawCircle(x + 4, y + 4, 4, SSD1306_WHITE);
+    engine.screen().drawCircle(gameX(engine, x + 4), gameY(engine, y + 4), gameSize(engine, 4),
+                               GAMER_ACCENT);
   } else if (style == 1) {
-    engine.screen().drawRect(x, y, 10, 7, SSD1306_WHITE);
-    engine.screen().drawFastHLine(x + 2, y + 7, 6, SSD1306_WHITE);
+    engine.screen().drawRect(gameX(engine, x), gameY(engine, y), gameSize(engine, 10),
+                             gameSize(engine, 7), GAMER_ACCENT);
+    engine.screen().drawFastHLine(gameX(engine, x + 2), gameY(engine, y + 7),
+                                  gameSize(engine, 6), GAMER_ACCENT);
   } else if (style == 2) {
-    engine.screen().drawTriangle(x + 5, y, x, y + 8, x + 10, y + 8, SSD1306_WHITE);
+    engine.screen().drawTriangle(gameX(engine, x + 5), gameY(engine, y),
+                                 gameX(engine, x), gameY(engine, y + 8),
+                                 gameX(engine, x + 10), gameY(engine, y + 8), GAMER_ACCENT);
   } else {
-    engine.screen().fillRect(x, y, 8, 8, SSD1306_WHITE);
+    engine.screen().fillRect(gameX(engine, x), gameY(engine, y), gameSize(engine, 8),
+                             gameSize(engine, 8), GAMER_ACCENT);
   }
 }
 
@@ -85,10 +91,15 @@ void runTurretPattern(GamerEngine& engine, const char* title, uint8_t style, boo
       }
 
       engine.clear();
-      engine.screen().drawRect(turretX, 56, 10, 6, SSD1306_WHITE);
-      engine.screen().drawFastVLine(turretX + 5, 50, 7, SSD1306_WHITE);
-      if (shot.active) engine.screen().fillRect(shot.x, shot.y, 2, 7, SSD1306_WHITE);
+      engine.screen().drawRect(gameX(engine, turretX), gameY(engine, 56), gameSize(engine, 10),
+                               gameSize(engine, 6), GAMER_WHITE);
+      engine.screen().drawFastVLine(gameX(engine, turretX + 5), gameY(engine, 50),
+                                    gameSize(engine, 7), GAMER_WHITE);
+      if (shot.active) engine.screen().fillRect(gameX(engine, shot.x), gameY(engine, shot.y),
+                                                gameSize(engine, 2), gameSize(engine, 7),
+                                                GAMER_WHITE);
       for (uint8_t i = 0; i < count; i++) drawTarget(engine, targetX[i], targetY[i], style);
+      engine.screen().setTextSize(engine.textScale());
       engine.screen().setCursor(0, 0);
       engine.screen().print("L:");
       engine.screen().print(lives);
@@ -152,11 +163,16 @@ void runMissilePattern(GamerEngine& engine, const char* title, bool wideBlast) {
       }
 
       engine.clear();
-      engine.screen().drawFastHLine(0, 63, SCREEN_WIDTH, SSD1306_WHITE);
-      engine.screen().drawFastVLine(siteX, 50, 10, SSD1306_WHITE);
-      engine.screen().drawLine(siteX - 3, 56, siteX + 3, 56, SSD1306_WHITE);
-      engine.screen().fillRect(threatX, threatY, 4, 8, SSD1306_WHITE);
-      if (blastLife > 0) engine.screen().drawCircle(blastX, blastY, radius, SSD1306_WHITE);
+      engine.screen().drawFastHLine(0, gameY(engine, 63), engine.width(), GAMER_WHITE);
+      engine.screen().drawFastVLine(gameX(engine, siteX), gameY(engine, 50), gameSize(engine, 10),
+                                    GAMER_WHITE);
+      engine.screen().drawLine(gameX(engine, siteX - 3), gameY(engine, 56),
+                               gameX(engine, siteX + 3), gameY(engine, 56), GAMER_WHITE);
+      engine.screen().fillRect(gameX(engine, threatX), gameY(engine, threatY), gameSize(engine, 4),
+                               gameSize(engine, 8), GAMER_ACCENT);
+      if (blastLife > 0) engine.screen().drawCircle(gameX(engine, blastX), gameY(engine, blastY),
+                                                    gameSize(engine, radius), GAMER_ACCENT);
+      engine.screen().setTextSize(engine.textScale());
       engine.screen().setCursor(0, 0);
       engine.screen().print("B:");
       engine.screen().print(base);
@@ -179,4 +195,3 @@ void runMissileCommandLite(GamerEngine& engine) { runMissilePattern(engine, "MIS
 void runTurretDefense(GamerEngine& engine) { runTurretPattern(engine, "TURRET DEF", 2, false, false); }
 void runUfoDefender(GamerEngine& engine) { runTurretPattern(engine, "UFO DEFENDER", 1, true, false); }
 void runMeteorBlaster(GamerEngine& engine) { runMissilePattern(engine, "METEOR BLAST", false); }
-

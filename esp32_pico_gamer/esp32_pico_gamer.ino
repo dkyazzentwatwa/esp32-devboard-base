@@ -8,37 +8,52 @@ bool menuDirty = true;
 
 void drawLauncher() {
   engine.clear();
-  Adafruit_SSD1306& display = engine.screen();
-  display.setCursor(0, 0);
-  display.print("ESP32 PICO GAMER");
+  Adafruit_GFX& display = engine.screen();
+  const uint8_t scale = engine.textScale();
+  const int16_t margin = GAMER_DISPLAY_IS_SH8601 ? 16 : 0;
+  const int16_t headerH = GAMER_DISPLAY_IS_SH8601 ? 44 : 10;
+  const int16_t footerH = GAMER_DISPLAY_IS_SH8601 ? 34 : 10;
+  const int16_t rowH = GAMER_DISPLAY_IS_SH8601 ? 34 : 10;
+
+  display.setTextSize(scale);
+  display.setTextColor(GAMER_WHITE, GAMER_BLACK);
+  display.setCursor(margin, GAMER_DISPLAY_IS_SH8601 ? 14 : 0);
+  display.print(GAMER_DISPLAY_IS_SH8601 ? "ESP32 AMOLED GAMER" : "ESP32 PICO GAMER");
 
   char countText[8];
   snprintf(countText, sizeof(countText), "%u/%u", selectedGame + 1, GAME_COUNT);
-  engine.rightText(countText);
+  String headerRight = countText;
+  const String power = engine.powerLabel();
+  if (power.length() > 0) {
+    headerRight += " ";
+    headerRight += power;
+  }
+  engine.rightText(headerRight.c_str(), GAMER_DISPLAY_IS_SH8601 ? 14 : 0);
 
-  const uint8_t rows = 4;
+  const uint8_t rows = max<uint8_t>(4, (engine.height() - headerH - footerH - 10) / rowH);
   uint8_t first = selectedGame >= rows ? selectedGame - rows + 1 : 0;
   if (first + rows > GAME_COUNT) first = GAME_COUNT > rows ? GAME_COUNT - rows : 0;
 
   for (uint8_t row = 0; row < rows; row++) {
     uint8_t index = first + row;
     if (index >= GAME_COUNT) break;
-    int16_t y = 14 + row * 10;
+    int16_t y = headerH + 4 + row * rowH;
     if (index == selectedGame) {
-      display.fillRect(0, y - 1, SCREEN_WIDTH, 9, SSD1306_WHITE);
-      display.setTextColor(SSD1306_BLACK);
-      display.setCursor(2, y);
+      display.fillRect(0, y - 4, engine.width(), rowH - 3, GAMER_ACCENT);
+      display.setTextColor(GAMER_BLACK, GAMER_ACCENT);
+      display.setCursor(margin, y);
       display.print(GAME_LIBRARY[index].title);
-      display.setTextColor(SSD1306_WHITE);
+      display.setTextColor(GAMER_WHITE, GAMER_BLACK);
     } else {
-      display.setCursor(2, y);
+      display.setCursor(margin, y);
       display.print(GAME_LIBRARY[index].title);
     }
   }
 
-  display.setCursor(0, 56);
+  display.setCursor(margin, engine.height() - footerH + (GAMER_DISPLAY_IS_SH8601 ? 8 : 0));
   display.print(GAME_LIBRARY[selectedGame].category);
-  engine.rightText("SEL PLAY", 56);
+  engine.rightText(GAMER_HAS_TOUCH ? "TAP PLAY" : "SEL PLAY",
+                   engine.height() - footerH + (GAMER_DISPLAY_IS_SH8601 ? 8 : 0));
   engine.show();
 }
 
@@ -76,4 +91,3 @@ void loop() {
 
   delay(10);
 }
-

@@ -20,9 +20,12 @@ bool restartScore(GamerEngine& engine, int16_t score) {
 void drawRunner(GamerEngine& engine, int16_t heroX, int16_t heroY, int16_t hazardX,
                 int16_t hazardY, uint16_t score, bool duck = false) {
   engine.clear();
-  engine.screen().drawFastHLine(0, 58, SCREEN_WIDTH, SSD1306_WHITE);
-  engine.screen().drawRect(heroX, heroY, duck ? 9 : 7, duck ? 5 : 9, SSD1306_WHITE);
-  engine.screen().fillRect(hazardX, hazardY, 6, 12, SSD1306_WHITE);
+  engine.screen().drawFastHLine(0, gameY(engine, 58), engine.width(), GAMER_WHITE);
+  engine.screen().drawRect(gameX(engine, heroX), gameY(engine, heroY),
+                           gameSize(engine, duck ? 9 : 7), gameSize(engine, duck ? 5 : 9),
+                           GAMER_WHITE);
+  engine.screen().fillRect(gameX(engine, hazardX), gameY(engine, hazardY),
+                           gameSize(engine, 6), gameSize(engine, 12), GAMER_ACCENT);
   drawScore(engine, score);
   engine.show();
 }
@@ -125,18 +128,23 @@ void runFlyer(GamerEngine& engine, const char* title, bool useGapWall, bool sele
       }
 
       engine.clear();
-      engine.screen().fillRect(16, y, 6, 6, SSD1306_WHITE);
+      engine.screen().fillRect(gameX(engine, 16), gameY(engine, y), gameSize(engine, 6),
+                               gameSize(engine, 6), GAMER_WHITE);
       if (useGapWall) {
-        engine.screen().fillRect(wallX, 0, 8, gapY, SSD1306_WHITE);
-        engine.screen().fillRect(wallX, gapY + 20, 8, 64 - gapY - 20, SSD1306_WHITE);
+        engine.screen().fillRect(gameX(engine, wallX), 0, gameSize(engine, 8), gameY(engine, gapY),
+                                 GAMER_ACCENT);
+        engine.screen().fillRect(gameX(engine, wallX), gameY(engine, gapY + 20),
+                                 gameSize(engine, 8), engine.height() - gameY(engine, gapY + 20),
+                                 GAMER_ACCENT);
       } else {
         int16_t topLine = gapY - 15;
         int16_t bottomLine = gapY + 23;
         if (topLine < 2) topLine = 2;
         if (bottomLine > 63) bottomLine = 63;
-        engine.screen().drawFastHLine(0, topLine, SCREEN_WIDTH, SSD1306_WHITE);
-        engine.screen().drawFastHLine(0, bottomLine, SCREEN_WIDTH, SSD1306_WHITE);
-        engine.screen().fillRect(wallX, gapY - 4, 8, 8, SSD1306_WHITE);
+        engine.screen().drawFastHLine(0, gameY(engine, topLine), engine.width(), GAMER_WHITE);
+        engine.screen().drawFastHLine(0, gameY(engine, bottomLine), engine.width(), GAMER_WHITE);
+        engine.screen().fillRect(gameX(engine, wallX), gameY(engine, gapY - 4),
+                                 gameSize(engine, 8), gameSize(engine, 8), GAMER_ACCENT);
       }
       drawScore(engine, score);
       engine.show();
@@ -204,13 +212,21 @@ void runCatchOrDodge(GamerEngine& engine, const char* title, bool catchMode, uin
       }
 
       engine.clear();
-      engine.screen().drawRect(playerX, 56, 12, 5, SSD1306_WHITE);
-      if (shape == 0) engine.screen().fillRect(itemX, itemY, 5, 5, SSD1306_WHITE);
-      else if (shape == 1) engine.screen().drawCircle(itemX + 3, itemY + 3, 3, SSD1306_WHITE);
+      engine.screen().drawRect(gameX(engine, playerX), gameY(engine, 56), gameSize(engine, 12),
+                               gameSize(engine, 5), GAMER_WHITE);
+      if (shape == 0) engine.screen().fillRect(gameX(engine, itemX), gameY(engine, itemY),
+                                               gameSize(engine, 5), gameSize(engine, 5),
+                                               GAMER_ACCENT);
+      else if (shape == 1) engine.screen().drawCircle(gameX(engine, itemX + 3),
+                                                       gameY(engine, itemY + 3),
+                                                       gameSize(engine, 3), GAMER_ACCENT);
       else {
-        engine.screen().drawPixel(itemX + 3, itemY, SSD1306_WHITE);
-        engine.screen().drawLine(itemX, itemY + 3, itemX + 6, itemY + 3, SSD1306_WHITE);
-        engine.screen().drawLine(itemX + 3, itemY, itemX + 3, itemY + 6, SSD1306_WHITE);
+        engine.screen().drawLine(gameX(engine, itemX), gameY(engine, itemY + 3),
+                                 gameX(engine, itemX + 6), gameY(engine, itemY + 3),
+                                 GAMER_ACCENT);
+        engine.screen().drawLine(gameX(engine, itemX + 3), gameY(engine, itemY),
+                                 gameX(engine, itemX + 3), gameY(engine, itemY + 6),
+                                 GAMER_ACCENT);
       }
       drawScore(engine, score);
       engine.show();
@@ -251,17 +267,26 @@ void runLaneGame(GamerEngine& engine, const char* title, bool gates, bool river)
       }
 
       engine.clear();
-      for (uint8_t i = 1; i < 3; i++) engine.screen().drawFastVLine(i * 42, 8, 56, SSD1306_WHITE);
+      for (uint8_t i = 1; i < 3; i++) {
+        engine.screen().drawFastVLine(gameX(engine, i * 42), gameY(engine, 8),
+                                      gameY(engine, 56), GAMER_DIM);
+      }
       int16_t playerX = 17 + lane * 42;
-      engine.screen().drawRect(playerX, 54, 8, 8, SSD1306_WHITE);
+      engine.screen().drawRect(gameX(engine, playerX), gameY(engine, 54), gameSize(engine, 8),
+                               gameSize(engine, 8), GAMER_WHITE);
       if (gates) {
         for (uint8_t i = 0; i < 3; i++) {
-          if (i != badLane) engine.screen().fillRect(12 + i * 42, y, 20, 4, SSD1306_WHITE);
+          if (i != badLane) {
+            engine.screen().fillRect(gameX(engine, 12 + i * 42), gameY(engine, y),
+                                     gameSize(engine, 20), gameSize(engine, 4), GAMER_ACCENT);
+          }
         }
       } else {
         int16_t objectX = 17 + badLane * 42;
-        if (river) engine.screen().drawCircle(objectX + 4, y + 4, 5, SSD1306_WHITE);
-        else engine.screen().fillRect(objectX, y, 8, 10, SSD1306_WHITE);
+        if (river) engine.screen().drawCircle(gameX(engine, objectX + 4), gameY(engine, y + 4),
+                                              gameSize(engine, 5), GAMER_ACCENT);
+        else engine.screen().fillRect(gameX(engine, objectX), gameY(engine, y),
+                                      gameSize(engine, 8), gameSize(engine, 10), GAMER_ACCENT);
       }
       drawScore(engine, score);
       engine.show();
@@ -329,10 +354,17 @@ void runBreakoutInternal(GamerEngine& engine) {
       }
       engine.clear();
       for (uint8_t r = 0; r < 4; r++) {
-        for (uint8_t c = 0; c < 8; c++) if (bricks[r][c]) engine.screen().fillRect(c * 16, 10 + r * 7, 14, 5, SSD1306_WHITE);
+        for (uint8_t c = 0; c < 8; c++) {
+          if (bricks[r][c]) {
+            engine.screen().fillRect(gameX(engine, c * 16), gameY(engine, 10 + r * 7),
+                                     gameSize(engine, 14), gameSize(engine, 5), GAMER_ACCENT);
+          }
+        }
       }
-      engine.screen().fillRect(left, 58, 24, 4, SSD1306_WHITE);
-      engine.screen().fillRect(ballX, ballY, 4, 4, SSD1306_WHITE);
+      engine.screen().fillRect(gameX(engine, left), gameY(engine, 58), gameSize(engine, 24),
+                               gameSize(engine, 4), GAMER_WHITE);
+      engine.screen().fillRect(gameX(engine, ballX), gameY(engine, ballY), gameSize(engine, 4),
+                               gameSize(engine, 4), GAMER_WHITE);
       drawScore(engine, score);
       engine.show();
       if (ballY > 64 || remaining == 0) {

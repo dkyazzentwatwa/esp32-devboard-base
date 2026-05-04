@@ -31,17 +31,35 @@ void drawScore(GamerEngine& engine, int16_t value) {
   engine.rightText(scoreText);
 }
 
+int16_t gameX(GamerEngine& engine, int16_t oledX) {
+  return static_cast<int32_t>(oledX) * engine.width() / 128;
+}
+
+int16_t gameY(GamerEngine& engine, int16_t oledY) {
+  return static_cast<int32_t>(oledY) * engine.height() / 64;
+}
+
+int16_t gameSize(GamerEngine& engine, int16_t oledSize) {
+  const int16_t sx = max<int16_t>(1, static_cast<int32_t>(oledSize) * engine.width() / 128);
+  const int16_t sy = max<int16_t>(1, static_cast<int32_t>(oledSize) * engine.height() / 64);
+  return min(sx, sy);
+}
+
 void drawCursorBox(GamerEngine& engine, int16_t x, int16_t y, int16_t w, int16_t h) {
-  engine.screen().drawRect(x - 1, y - 1, w + 2, h + 2, SSD1306_WHITE);
+  engine.screen().drawRect(x - 1, y - 1, w + 2, h + 2, GAMER_WHITE);
 }
 
 void drawMiniGrid(GamerEngine& engine, uint8_t cols, uint8_t rows, uint8_t cell,
                   int16_t ox, int16_t oy) {
+  const int16_t scaledCell = gameSize(engine, cell);
+  const int16_t scaledOx = gameX(engine, ox);
+  const int16_t scaledOy = gameY(engine, oy);
   for (uint8_t x = 0; x <= cols; x++) {
-    engine.screen().drawFastVLine(ox + x * cell, oy, rows * cell, SSD1306_WHITE);
+    engine.screen().drawFastVLine(scaledOx + x * scaledCell, scaledOy, rows * scaledCell,
+                                  GAMER_WHITE);
   }
   for (uint8_t y = 0; y <= rows; y++) {
-    engine.screen().drawFastHLine(ox, oy + y * cell, cols * cell, SSD1306_WHITE);
+    engine.screen().drawFastHLine(scaledOx, scaledOy + y * scaledCell, cols * scaledCell,
+                                  GAMER_WHITE);
   }
 }
-

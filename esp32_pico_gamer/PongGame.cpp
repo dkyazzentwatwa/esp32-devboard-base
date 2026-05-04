@@ -1,20 +1,20 @@
 #include "Games.h"
 
 void runPong(GamerEngine& engine) {
-  const int8_t ballSize = 4;
-  const int8_t paddleWidth = 18;
-  const int8_t paddleHeight = 4;
-  const int8_t paddleY = SCREEN_HEIGHT - 10;
-  const int8_t paddleSpeed = 4;
+  const int16_t ballSize = GAMER_DISPLAY_IS_SH8601 ? 12 : 4;
+  const int16_t paddleWidth = engine.width() / (GAMER_DISPLAY_IS_SH8601 ? 4 : 7);
+  const int16_t paddleHeight = GAMER_DISPLAY_IS_SH8601 ? 10 : 4;
+  const int16_t paddleY = engine.height() - (GAMER_DISPLAY_IS_SH8601 ? 32 : 10);
+  const int16_t paddleSpeed = GAMER_DISPLAY_IS_SH8601 ? 10 : 4;
 
   while (true) {
     if (!engine.waitForSelectOrExit("PONG", "L/R move paddle", "SEL start")) return;
 
-    int16_t ballX = 64;
-    int16_t ballY = 16;
-    int8_t ballVx = random(0, 2) == 0 ? -2 : 2;
-    int8_t ballVy = 2;
-    int16_t paddleX = (SCREEN_WIDTH - paddleWidth) / 2;
+    int16_t ballX = engine.width() / 2;
+    int16_t ballY = engine.height() / 4;
+    int8_t ballVx = random(0, 2) == 0 ? -paddleSpeed / 2 : paddleSpeed / 2;
+    int8_t ballVy = GAMER_DISPLAY_IS_SH8601 ? 7 : 2;
+    int16_t paddleX = (engine.width() - paddleWidth) / 2;
     uint16_t score = 0;
     uint32_t nextFrame = 0;
 
@@ -34,7 +34,7 @@ void runPong(GamerEngine& engine) {
 
       if (engine.isHeld(BTN_LEFT)) paddleX -= paddleSpeed;
       if (engine.isHeld(BTN_RIGHT)) paddleX += paddleSpeed;
-      paddleX = constrain(paddleX, 0, SCREEN_WIDTH - paddleWidth);
+      paddleX = constrain(paddleX, 0, static_cast<int16_t>(engine.width() - paddleWidth));
 
       ballX += ballVx;
       ballY += ballVy;
@@ -45,8 +45,8 @@ void runPong(GamerEngine& engine) {
         ballVx = -ballVx;
         collision = true;
       }
-      if (ballX + ballSize >= SCREEN_WIDTH) {
-        ballX = SCREEN_WIDTH - ballSize;
+      if (ballX + ballSize >= engine.width()) {
+        ballX = engine.width() - ballSize;
         ballVx = -ballVx;
         collision = true;
       }
@@ -59,16 +59,17 @@ void runPong(GamerEngine& engine) {
         ballY = paddleY - ballSize;
         ballVy = -abs(ballVy);
         int16_t offset = ballX - (paddleX + paddleWidth / 2);
-        int8_t nextVx = ballVx + offset / 8;
-        if (nextVx < -4) nextVx = -4;
-        if (nextVx > 4) nextVx = 4;
+        int8_t nextVx = ballVx + offset / (GAMER_DISPLAY_IS_SH8601 ? 22 : 8);
+        const int8_t maxVx = GAMER_DISPLAY_IS_SH8601 ? 12 : 4;
+        if (nextVx < -maxVx) nextVx = -maxVx;
+        if (nextVx > maxVx) nextVx = maxVx;
         ballVx = nextVx;
         if (ballVx == 0) ballVx = random(0, 2) == 0 ? -1 : 1;
         score += 10;
         collision = true;
       }
 
-      if (ballY + ballSize > SCREEN_HEIGHT) {
+      if (ballY + ballSize > engine.height()) {
         engine.ledPulse(CRGB::Red, 280);
         char detail[18];
         snprintf(detail, sizeof(detail), "Score %u", score);
@@ -79,8 +80,8 @@ void runPong(GamerEngine& engine) {
       if (collision) engine.ledPulse(CRGB::Blue, 45);
 
       engine.clear();
-      engine.screen().fillRect(paddleX, paddleY, paddleWidth, paddleHeight, SSD1306_WHITE);
-      engine.screen().fillRect(ballX, ballY, ballSize, ballSize, SSD1306_WHITE);
+      engine.screen().fillRect(paddleX, paddleY, paddleWidth, paddleHeight, GAMER_WHITE);
+      engine.screen().fillRect(ballX, ballY, ballSize, ballSize, GAMER_WHITE);
       char scoreText[8];
       snprintf(scoreText, sizeof(scoreText), "%u", score);
       engine.rightText(scoreText);

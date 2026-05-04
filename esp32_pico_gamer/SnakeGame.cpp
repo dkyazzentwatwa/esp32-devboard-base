@@ -1,9 +1,9 @@
 #include "Games.h"
 
 namespace {
-constexpr uint8_t CELL = 8;
-constexpr uint8_t GRID_W = 16;
-constexpr uint8_t GRID_H = 8;
+constexpr uint8_t CELL = GAMER_DISPLAY_IS_SH8601 ? 24 : 8;
+constexpr uint8_t GRID_W = SCREEN_WIDTH / CELL;
+constexpr uint8_t GRID_H = (SCREEN_HEIGHT - (GAMER_DISPLAY_IS_SH8601 ? 44 : 0)) / CELL;
 constexpr uint8_t MAX_SNAKE = GRID_W * GRID_H;
 
 enum Direction : uint8_t {
@@ -54,9 +54,13 @@ Cell placeFood(const Cell snake[], uint8_t length) {
 
 void drawSnake(GamerEngine& engine, const Cell snake[], uint8_t length, const Cell& food, uint16_t score) {
   engine.clear();
-  engine.screen().fillRect(food.x * CELL + 2, food.y * CELL + 2, 4, 4, SSD1306_WHITE);
+  const int16_t ox = (engine.width() - GRID_W * CELL) / 2;
+  const int16_t oy = GAMER_DISPLAY_IS_SH8601 ? 34 : 0;
+  engine.screen().fillRect(ox + food.x * CELL + CELL / 4, oy + food.y * CELL + CELL / 4,
+                           CELL / 2, CELL / 2, GAMER_ACCENT);
   for (uint8_t i = 0; i < length; i++) {
-    engine.screen().drawRect(snake[i].x * CELL, snake[i].y * CELL, CELL, CELL, SSD1306_WHITE);
+    engine.screen().drawRect(ox + snake[i].x * CELL, oy + snake[i].y * CELL, CELL, CELL,
+                             i == length - 1 ? GAMER_ACCENT : GAMER_WHITE);
   }
   char scoreText[8];
   snprintf(scoreText, sizeof(scoreText), "%u", score);

@@ -1,18 +1,27 @@
 #include "Games.h"
+#include "GameUtils.h"
 
 namespace {
 void drawRoad(GamerEngine& engine, int16_t shift) {
-  engine.screen().drawLine(18 + shift / 4, 34, 110 + shift / 4, 34, SSD1306_WHITE);
-  engine.screen().drawLine(46 + shift, 34, 16, 63, SSD1306_WHITE);
-  engine.screen().drawLine(82 + shift, 34, 112, 63, SSD1306_WHITE);
-  engine.screen().drawLine(62 + shift / 2, 38, 60, 63, SSD1306_WHITE);
-  engine.screen().drawLine(66 + shift / 2, 38, 68, 63, SSD1306_WHITE);
+  const int16_t horizonY = gameY(engine, 34);
+  const int16_t roadBottom = engine.height() - 1;
+  engine.screen().drawLine(gameX(engine, 18) + shift / 2, horizonY,
+                           gameX(engine, 110) + shift / 2, horizonY, GAMER_WHITE);
+  engine.screen().drawLine(gameX(engine, 46) + shift, horizonY, gameX(engine, 16), roadBottom,
+                           GAMER_WHITE);
+  engine.screen().drawLine(gameX(engine, 82) + shift, horizonY, gameX(engine, 112), roadBottom,
+                           GAMER_WHITE);
+  engine.screen().drawLine(gameX(engine, 62) + shift / 2, horizonY + gameSize(engine, 4),
+                           gameX(engine, 60), roadBottom, GAMER_DIM);
+  engine.screen().drawLine(gameX(engine, 66) + shift / 2, horizonY + gameSize(engine, 4),
+                           gameX(engine, 68), roadBottom, GAMER_DIM);
 }
 
 void drawBike(GamerEngine& engine, int16_t x, int16_t y) {
-  engine.screen().drawRect(x - 2, y - 6, 4, 3, SSD1306_WHITE);
-  engine.screen().drawRect(x - 1, y - 2, 2, 4, SSD1306_WHITE);
-  engine.screen().drawPixel(x, y - 8, SSD1306_WHITE);
+  const int16_t s = gameSize(engine, 3);
+  engine.screen().drawRect(x - s, y - s * 2, s * 2, s, GAMER_WHITE);
+  engine.screen().drawRect(x - s / 2, y - s / 2, s, s * 2, GAMER_WHITE);
+  engine.screen().fillCircle(x, y - s * 3, max<int16_t>(1, s / 2), GAMER_ACCENT);
 }
 }
 
@@ -49,9 +58,9 @@ void runFullSpeed(GamerEngine& engine) {
       roadShift += roadDir;
       if (roadShift <= -28 || roadShift >= 24) roadDir = -roadDir;
 
-      obstacleY += speed + 1;
-      if (obstacleY > 64) {
-        obstacleY = -10;
+      obstacleY += (speed + 1) * (GAMER_DISPLAY_IS_SH8601 ? 4 : 1);
+      if (obstacleY > engine.height()) {
+        obstacleY = -gameY(engine, 10);
         obstacleX = random(-34, 35);
         score++;
         engine.ledPulse(CRGB::Aqua, 70);
@@ -63,11 +72,13 @@ void runFullSpeed(GamerEngine& engine) {
       else if (roadShift > 12) playerX--;
 
       bool crash = playerX < -46 || playerX > 46;
-      if (obstacleY > 42 && obstacleY < 62 && abs(playerX - obstacleX - roadCenter / 2) < 7) {
+      if (obstacleY > gameY(engine, 42) && obstacleY < engine.height() &&
+          abs(playerX - obstacleX - roadCenter / 2) < 7) {
         crash = true;
       }
 
       engine.clear();
+      engine.screen().setTextSize(engine.textScale());
       engine.screen().setCursor(0, 0);
       engine.screen().print("S:");
       engine.screen().print(score);
@@ -75,8 +86,14 @@ void runFullSpeed(GamerEngine& engine) {
       snprintf(speedText, sizeof(speedText), "%uk", static_cast<unsigned>((score + 1) * 5));
       engine.rightText(speedText);
       drawRoad(engine, roadShift);
-      drawBike(engine, 64 + playerX, 56);
-      if (obstacleY > -8) drawBike(engine, 64 + obstacleX + roadCenter / 2, obstacleY);
+      drawBike(engine, gameX(engine, 64) + playerX * (GAMER_DISPLAY_IS_SH8601 ? 3 : 1),
+               engine.height() - gameY(engine, 8));
+      if (obstacleY > -gameY(engine, 8)) {
+        drawBike(engine,
+                 gameX(engine, 64) + obstacleX * (GAMER_DISPLAY_IS_SH8601 ? 3 : 1) +
+                     roadCenter,
+                 obstacleY);
+      }
       engine.show();
 
       if (crash) {
@@ -89,4 +106,3 @@ void runFullSpeed(GamerEngine& engine) {
     }
   }
 }
-

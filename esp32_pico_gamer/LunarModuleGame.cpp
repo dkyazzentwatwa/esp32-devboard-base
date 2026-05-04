@@ -1,13 +1,15 @@
 #include "Games.h"
+#include "GameUtils.h"
 
 namespace {
 void drawLander(GamerEngine& engine, int16_t x, int16_t y, bool thrust) {
-  engine.screen().drawRect(x + 2, y + 2, 6, 5, SSD1306_WHITE);
-  engine.screen().drawRect(x + 3, y, 4, 3, SSD1306_WHITE);
-  engine.screen().drawFastVLine(x + 1, y + 5, 5, SSD1306_WHITE);
-  engine.screen().drawFastVLine(x + 8, y + 5, 5, SSD1306_WHITE);
+  const int16_t s = gameSize(engine, 3);
+  engine.screen().drawRect(x + s, y + s, s * 3, s * 2, GAMER_WHITE);
+  engine.screen().drawRect(x + s * 2, y, s * 2, s, GAMER_WHITE);
+  engine.screen().drawFastVLine(x, y + s * 3, s * 2, GAMER_WHITE);
+  engine.screen().drawFastVLine(x + s * 5, y + s * 3, s * 2, GAMER_WHITE);
   if (thrust) {
-    engine.screen().drawFastVLine(x + 5, y + 8, 7, SSD1306_WHITE);
+    engine.screen().drawFastVLine(x + s * 3, y + s * 4, s * 3, GAMER_ACCENT);
   }
 }
 }
@@ -64,26 +66,32 @@ void runLunarModule(GamerEngine& engine) {
         x = 0;
         vx = 1;
       }
-      if (x > 120) {
-        x = 120;
+      if (x > engine.width() - gameSize(engine, 18)) {
+        x = engine.width() - gameSize(engine, 18);
         vx = -1;
       }
       if (fuel < 0) fuel = 0;
       if (thrustFlash && static_cast<int32_t>(now - thrustUntil) >= 0) thrustFlash = false;
 
       engine.clear();
+      engine.screen().setTextSize(engine.textScale());
       engine.screen().setCursor(0, 0);
       engine.screen().print("F:");
       engine.screen().print(fuel);
       char velocity[8];
       snprintf(velocity, sizeof(velocity), "V:%d", vy);
       engine.rightText(velocity);
-      engine.screen().drawRect(94, 62, 22, 2, SSD1306_WHITE);
+      const int16_t padW = gameX(engine, 22);
+      const int16_t padX = engine.width() - padW - gameX(engine, 12);
+      const int16_t groundY = engine.height() - gameY(engine, 2);
+      engine.screen().drawRect(padX, groundY, padW, max<int16_t>(2, gameSize(engine, 2)),
+                               GAMER_WHITE);
       drawLander(engine, x, y, thrustFlash);
       engine.show();
 
-      if (y >= 52) {
-        bool landed = x >= 92 && x <= 112 && abs(vx) <= 3 && vy <= 6;
+      if (y >= engine.height() - gameY(engine, 12)) {
+        bool landed = x >= padX - gameSize(engine, 4) && x <= padX + padW &&
+                      abs(vx) <= 3 && vy <= 6;
         if (landed) {
           engine.ledPulse(CRGB::Green, 450);
           engine.clear();

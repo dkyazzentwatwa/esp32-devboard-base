@@ -27,19 +27,27 @@ Base firmware for general ESP32 dev board testing.
 **Test Pins (H3):** IO33, IO32, IO2, IO0
 
 ### `esp32_pico_gamer/`
-Arduino/C++ port of the Pico Gamer project for this ESP32 devboard.
+Arduino/C++ port of the Pico Gamer project for the ESP32 devkit and Waveshare ESP32-S3-Touch-AMOLED-1.8.
 
 **Features:**
-- Launcher for 52 128x64 OLED games, from Pico ports to new micro arcade, puzzle, shooter, board, racing, and reflex games
-- Modular game engine with display helpers, debounced button input, and game lifecycle helpers
-- Three-button smart controls: Left/Right move or navigate, Select starts/actions, Select long press exits to launcher
+- Launcher for 52 games, from Pico ports to new micro arcade, puzzle, shooter, board, racing, and reflex games
+- Same sketch supports SSD1306 devkit and native 368x448 AMOLED profiles
+- Modular game engine with Adafruit_GFX display helpers, debounced button/touch input, and game lifecycle helpers
+- Devkit controls: Left/Right move or navigate, Select starts/actions, Select long press exits to launcher
+- AMOLED controls: left/right touch zones move or navigate, center tap selects/actions, BOOT long press exits to launcher
 - Silent gameplay: no PWM audio, no buzzer pin, no tone output
 - RGB LED feedback for menu movement, collisions, scores, crashes, and landings
 
-**Controls:**
+**Devkit Controls:**
 - GPIO 34 — Left
 - GPIO 36 — Right
 - GPIO 39 — Select
+
+**AMOLED Controls:**
+- Left screen zone — Left
+- Right screen zone — Right
+- Center screen zone — Select/action
+- GPIO 0 BOOT — long press exits a running game
 
 **Game Catalog:**
 - Pico ports: Pong, Snake, Full Speed, Lunar Module
@@ -83,8 +91,13 @@ Install via Arduino IDE Library Manager:
 ```
 Adafruit GFX
 Adafruit SSD1306
+Adafruit XCA9554
 FastLED
+GFX Library for Arduino
+XPowersLib
 ```
+
+For the AMOLED touch profile, install Waveshare's offline `Arduino_DriveBus` package from the ESP32-S3-Touch-AMOLED-1.8 Arduino sample bundle. In `arduino-cli lib list` it may appear as `Driver Bus Library Based on Arduino`.
 
 ## Compile & Flash
 
@@ -113,11 +126,34 @@ arduino-cli compile -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32
 arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32
 ```
 
-For the Pico Gamer port:
+For the Pico Gamer port on the SSD1306 devkit:
 
 ```bash
 arduino-cli compile --fqbn esp32:esp32:esp32 esp32_pico_gamer
 arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 esp32_pico_gamer
+```
+
+For the Pico Gamer port on the Waveshare ESP32-S3-Touch-AMOLED-1.8:
+
+```bash
+arduino-cli compile \
+  --fqbn 'esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi,USBMode=default,CDCOnBoot=cdc,PartitionScheme=app3M_fat9M_16MB' \
+  --build-property build.extra_flags='-DESP32 -DGAMER_BOARD_PROFILE=GAMER_BOARD_WAVESHARE_AMOLED_18' \
+  esp32_pico_gamer
+```
+
+The AMOLED board uses native USB. For upload, touch the current runtime port at 1200 baud, wait for it to re-enumerate, then upload to the new bootloader port:
+
+```bash
+python3 -c "import serial,time; s=serial.Serial('/dev/cu.usbmodemXXXX',1200); time.sleep(0.1); s.close()"
+sleep 2
+arduino-cli board list
+arduino-cli upload \
+  -p /dev/cu.usbmodemYYYY \
+  --fqbn 'esp32:esp32:esp32s3:FlashSize=16M,PSRAM=opi,USBMode=default,CDCOnBoot=cdc,PartitionScheme=app3M_fat9M_16MB' \
+  --build-property build.extra_flags='-DESP32 -DGAMER_BOARD_PROFILE=GAMER_BOARD_WAVESHARE_AMOLED_18' \
+  esp32_pico_gamer
+arduino-cli monitor -p /dev/cu.usbmodemYYYY -c baudrate=115200
 ```
 
 ## Pin Reference
@@ -130,6 +166,18 @@ arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 esp32_pico_gamer
 | 34 | Button Left / Up |
 | 36 | Button Center / Down |
 | 39 | Button Right / Select |
+
+### Waveshare ESP32-S3-Touch-AMOLED-1.8
+
+| Pin | Function |
+|-----|----------|
+| 4/5/6/7 | SH8601 QSPI data |
+| 11 | SH8601 QSPI SCLK |
+| 12 | SH8601 QSPI CS |
+| 14 | FT3168 / XCA9554 I2C SCL |
+| 15 | FT3168 / XCA9554 I2C SDA |
+| 21 | FT3168 touch interrupt |
+| 0 | BOOT exit button |
 
 ## License
 

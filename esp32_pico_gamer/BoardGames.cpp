@@ -29,10 +29,10 @@ bool full3(const uint8_t board[9]) {
 
 void drawMark(GamerEngine& engine, int16_t x, int16_t y, uint8_t mark) {
   if (mark == 1) {
-    engine.screen().drawLine(x + 3, y + 3, x + 11, y + 11, SSD1306_WHITE);
-    engine.screen().drawLine(x + 11, y + 3, x + 3, y + 11, SSD1306_WHITE);
+    engine.screen().drawLine(x + 3, y + 3, x + 11, y + 11, GAMER_WHITE);
+    engine.screen().drawLine(x + 11, y + 3, x + 3, y + 11, GAMER_WHITE);
   } else if (mark == 2) {
-    engine.screen().drawCircle(x + 7, y + 7, 5, SSD1306_WHITE);
+    engine.screen().drawCircle(x + 7, y + 7, 5, GAMER_WHITE);
   }
 }
 
@@ -61,9 +61,12 @@ bool dropDisc(uint8_t board[4][4], uint8_t col, uint8_t who) {
 
 void drawReflexBar(GamerEngine& engine, int16_t pos, int16_t target, int16_t score) {
   engine.clear();
-  engine.screen().drawRect(8, 28, 112, 8, SSD1306_WHITE);
-  engine.screen().fillRect(target - 5, 26, 10, 12, SSD1306_WHITE);
-  engine.screen().fillRect(pos, 24, 3, 16, SSD1306_INVERSE);
+  engine.screen().drawRect(gameX(engine, 8), gameY(engine, 28), gameX(engine, 112),
+                           gameSize(engine, 8), GAMER_WHITE);
+  engine.screen().fillRect(gameX(engine, target - 5), gameY(engine, 26), gameSize(engine, 10),
+                           gameSize(engine, 12), GAMER_ACCENT);
+  engine.screen().fillRect(gameX(engine, pos), gameY(engine, 24), gameSize(engine, 3),
+                           gameSize(engine, 16), GAMER_INVERSE);
   drawScore(engine, score);
   engine.show();
 }
@@ -79,7 +82,7 @@ void runWaitGame(GamerEngine& engine, const char* title, bool allowLeftRight) {
       if (engine.shouldExitGame()) { engine.waitForRelease(); return; }
       if (selectTap(engine) || (allowLeftRight && (engine.wasPressed(BTN_LEFT) || engine.wasPressed(BTN_RIGHT)))) early = true;
       engine.clear();
-      engine.centerText("WAIT", 26, 2);
+      engine.centerText("WAIT", gameY(engine, 26), GAMER_DISPLAY_IS_SH8601 ? 4 : 2);
       engine.show();
       delay(10);
     }
@@ -93,7 +96,7 @@ void runWaitGame(GamerEngine& engine, const char* title, bool allowLeftRight) {
       engine.tick();
       if (engine.shouldExitGame()) { engine.waitForRelease(); return; }
       engine.clear();
-      engine.centerText("GO", 24, 2);
+      engine.centerText("GO", gameY(engine, 24), GAMER_DISPLAY_IS_SH8601 ? 5 : 2);
       engine.show();
       bool pressed = selectTap(engine) || (allowLeftRight && (engine.wasPressed(BTN_LEFT) || engine.wasPressed(BTN_RIGHT)));
       if (pressed) {
@@ -167,12 +170,12 @@ void runConnectFour(GamerEngine& engine) {
         for (uint8_t x = 0; x < 4; x++) {
           int16_t px = 36 + x * 15;
           int16_t py = 8 + y * 13;
-          engine.screen().drawCircle(px + 6, py + 6, 5, SSD1306_WHITE);
-          if (board[y][x] == 1) engine.screen().fillCircle(px + 6, py + 6, 3, SSD1306_WHITE);
-          if (board[y][x] == 2) engine.screen().drawLine(px + 2, py + 2, px + 10, py + 10, SSD1306_WHITE);
+          engine.screen().drawCircle(px + 6, py + 6, 5, GAMER_WHITE);
+          if (board[y][x] == 1) engine.screen().fillCircle(px + 6, py + 6, 3, GAMER_WHITE);
+          if (board[y][x] == 2) engine.screen().drawLine(px + 2, py + 2, px + 10, py + 10, GAMER_WHITE);
         }
       }
-      engine.screen().drawFastHLine(36 + col * 15, 61, 12, SSD1306_WHITE);
+      engine.screen().drawFastHLine(36 + col * 15, 61, 12, GAMER_WHITE);
       engine.show();
       if (winConnect(board, 1) || winConnect(board, 2)) {
         bool won = winConnect(board, 1);
@@ -211,9 +214,13 @@ void runNim(GamerEngine& engine) {
         }
       }
       engine.clear();
-      engine.centerText("PILE", 6);
-      for (uint8_t i = 0; i < pile; i++) engine.screen().fillRect(18 + (i % 10) * 9, 22 + (i / 10) * 10, 5, 7, SSD1306_WHITE);
-      engine.screen().setCursor(0, 54);
+      engine.centerText("PILE", gameY(engine, 6), engine.textScale());
+      for (uint8_t i = 0; i < pile; i++) {
+        engine.screen().fillRect(gameX(engine, 18 + (i % 10) * 9), gameY(engine, 22 + (i / 10) * 10),
+                                 gameSize(engine, 5), gameSize(engine, 7), GAMER_WHITE);
+      }
+      engine.screen().setTextSize(engine.textScale());
+      engine.screen().setCursor(0, gameY(engine, 54));
       engine.screen().print("Take:");
       engine.screen().print(take);
       drawScore(engine, pile);
@@ -249,17 +256,17 @@ void runDotsBoxesLite(GamerEngine& engine) {
         }
       }
       engine.clear();
-      for (uint8_t y = 0; y < 3; y++) for (uint8_t x = 0; x < 3; x++) engine.screen().fillCircle(44 + x * 18, 14 + y * 18, 2, SSD1306_WHITE);
+      for (uint8_t y = 0; y < 3; y++) for (uint8_t x = 0; x < 3; x++) engine.screen().fillCircle(44 + x * 18, 14 + y * 18, 2, GAMER_WHITE);
       for (uint8_t i = 0; i < 12; i++) {
         bool horiz = i < 6;
         uint8_t n = horiz ? i : i - 6;
         int16_t x = 44 + (n % 2) * 18;
         int16_t y = 14 + (n / 2) * 18;
-        if (horiz && edge[i]) engine.screen().drawFastHLine(x, y, 18, SSD1306_WHITE);
-        if (!horiz && edge[i]) engine.screen().drawFastVLine(44 + (n % 3) * 18, 14 + (n / 3) * 18, 18, SSD1306_WHITE);
+        if (horiz && edge[i]) engine.screen().drawFastHLine(x, y, 18, GAMER_WHITE);
+        if (!horiz && edge[i]) engine.screen().drawFastVLine(44 + (n % 3) * 18, 14 + (n / 3) * 18, 18, GAMER_WHITE);
         if (i == cursor) {
-          if (horiz) engine.screen().drawRect(x + 3, y - 3, 12, 6, SSD1306_WHITE);
-          else engine.screen().drawRect(44 + (n % 3) * 18 - 3, 14 + (n / 3) * 18 + 3, 6, 12, SSD1306_WHITE);
+          if (horiz) engine.screen().drawRect(x + 3, y - 3, 12, 6, GAMER_WHITE);
+          else engine.screen().drawRect(44 + (n % 3) * 18 - 3, 14 + (n / 3) * 18 + 3, 6, 12, GAMER_WHITE);
         }
       }
       drawScore(engine, claimed);
@@ -333,8 +340,10 @@ void runStackTower(GamerEngine& engine) {
       x += dir;
       if (x < 0 || x + width > 128) dir = -dir;
       engine.clear();
-      engine.screen().fillRect(baseX, y + 6, width, 5, SSD1306_WHITE);
-      engine.screen().drawRect(x, y, width, 5, SSD1306_WHITE);
+      engine.screen().fillRect(gameX(engine, baseX), gameY(engine, y + 6), gameSize(engine, width),
+                               gameSize(engine, 5), GAMER_WHITE);
+      engine.screen().drawRect(gameX(engine, x), gameY(engine, y), gameSize(engine, width),
+                               gameSize(engine, 5), GAMER_ACCENT);
       drawScore(engine, rows);
       engine.show();
     }
@@ -394,11 +403,13 @@ void runPixelWhack(GamerEngine& engine) {
       }
       engine.clear();
       for (uint8_t i = 0; i < 12; i++) {
-        int16_t x = 24 + (i % 4) * 20;
-        int16_t y = 12 + (i / 4) * 15;
-        if (i == target) engine.screen().fillRect(x + 5, y + 4, 4, 4, SSD1306_WHITE);
-        engine.screen().drawRect(x, y, 14, 12, SSD1306_WHITE);
-        if (i == cursor) drawCursorBox(engine, x, y, 14, 12);
+        int16_t x = gameX(engine, 24 + (i % 4) * 20);
+        int16_t y = gameY(engine, 12 + (i / 4) * 15);
+        int16_t w = gameSize(engine, 14);
+        int16_t h = gameSize(engine, 12);
+        if (i == target) engine.screen().fillRect(x + w / 3, y + h / 3, w / 3, h / 3, GAMER_ACCENT);
+        engine.screen().drawRect(x, y, w, h, GAMER_WHITE);
+        if (i == cursor) drawCursorBox(engine, x, y, w, h);
       }
       drawScore(engine, score);
       engine.show();
